@@ -5,9 +5,6 @@ from .serializers import LabelSerializers , TaskSerializers
 from .permissions_task import IsOwner
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
-
-
-
 @extend_schema_view(
     list=extend_schema(summary="List all labels", description="Retrieve all labels owned by the authenticated user."),
     create=extend_schema(summary="Create a new label", description="Create a new label for the authenticated user."),
@@ -26,6 +23,24 @@ class LabelViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         return serializer.save(owner=self.request.user)
     
+    def perform_destroy(self, instance):
+        print(f"Task with ID{instance.id} is being deleted")
+        instance.delete()
+    def destroy(self,request,*args,**kwargs):
+
+        instance=self.get_object()
+        
+
+        self.perform_destroy(instance)
+        return Response(
+            {"success":True,
+                "message": "Label deleted successfully!",
+            
+                },
+            status=status.HTTP_200_OK
+        )
+
+    
 
 
 
@@ -43,7 +58,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Task.objects.filter(owner=self.request.user)
-    
+        
     def perform_create(self, serializer):
 
         
@@ -63,13 +78,16 @@ class TaskViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         print(f"Task with ID{instance.id} is being deleted")
         instance.delete()
-    def destroy(self,request,*args,**kwargs):
 
+    def destroy(self,request,*args,**kwargs):
         instance=self.get_object()
         self.perform_destroy(instance)
         return Response(
-            {"message": "Task deleted successfully!"},
-            status=status.HTTP_204_NO_CONTENT
+            {"success":True,
+                "message": "Task deleted successfully!",
+                
+                },
+            status=status.HTTP_200_OK
         )
 
 
