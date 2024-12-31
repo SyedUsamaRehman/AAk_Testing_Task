@@ -1,4 +1,5 @@
-from rest_framework import viewsets,permissions
+from rest_framework import viewsets,permissions,status
+from rest_framework.response import Response
 from .models import Task,Label
 from .serializers import LabelSerializers , TaskSerializers
 from .permissions_task import IsOwner
@@ -44,9 +45,32 @@ class TaskViewSet(viewsets.ModelViewSet):
         return Task.objects.filter(owner=self.request.user)
     
     def perform_create(self, serializer):
-        return serializer.save(owner=self.request.user)
 
+        
+        task = serializer.save(owner=self.request.user)
+        labels = self.request.data.get('labels', [])
+        if labels:
+            task.labels.set(labels)
+        self.response_message = {
+            "message": "Task created successfully!",
+            "task": TaskSerializers(task).data  
+        }
+    
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        return Response(self.response_message, status=status.HTTP_201_CREATED)
+    
+    def perform_destroy(self, instance):
+        print(f"Task with ID{instance.id} is being deleted")
+        instance.delete()
+    def destroy(self,request,*args,**kwargs):
 
+        instance=self.get_object()
+        self.perform_destroy(instance)
+        return Response(
+            {"message": "Task deleted successfully!"},
+            status=status.HTTP_204_NO_CONTENT
+        )
 
 
 
